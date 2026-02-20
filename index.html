@@ -1,0 +1,1816 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Production Jobcard Scan</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    *,
+    *::before,
+    *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    :root {
+      --bg: #f8fafc;
+      --surface: #ffffff;
+      --surface-2: #f1f5f9;
+      --border: #e2e8f0;
+      --accent: #2563eb;
+      --accent-glow: rgba(37, 99, 235, 0.1);
+      --accent-dark: #1e40af;
+      --success: #16a34a;
+      --success-light: rgba(22, 163, 74, 0.1);
+      --warning: #ca8a04;
+      --warning-light: rgba(202, 138, 4, 0.1);
+      --danger: #dc2626;
+      --danger-light: rgba(220, 38, 38, 0.1);
+      --text-primary: #0f172a;
+      --text-secondary: #475569;
+      --text-muted: #94a3b8;
+      --radius: 12px;
+      --radius-sm: 8px;
+      --shadow: 0 4px 12px rgba(0, 0, 0, 0.05), 0 1px 3px rgba(0, 0, 0, 0.1);
+      --shadow-accent: 0 0 12px rgba(37, 99, 235, 0.1);
+      --font: 'Inter', system-ui, -apple-system, sans-serif;
+    }
+
+    body {
+      font-family: var(--font);
+      background: var(--bg);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      color: var(--text-primary);
+    }
+
+    .app-wrapper {
+      width: 100%;
+      max-width: 860px;
+    }
+
+    /* ── Header ─────────────────────────────── */
+    .app-header {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      margin-bottom: 24px;
+    }
+
+    .app-logo {
+      width: 44px;
+      height: 44px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 6px;
+      box-shadow: var(--shadow);
+      flex-shrink: 0;
+    }
+
+    .header-badge {
+      margin-left: auto;
+      background: #f1f5f9;
+      color: var(--text-secondary);
+      border: 1px solid var(--border);
+      padding: 5px 12px;
+      border-radius: 20px;
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.5px;
+    }
+
+    /* ── Card / Panel ────────────────────────── */
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      overflow: hidden;
+    }
+
+    .card-header {
+      padding: 18px 24px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      background: linear-gradient(90deg, rgba(59, 130, 246, 0.08) 0%, transparent 100%);
+    }
+
+    .card-header-icon {
+      font-size: 16px;
+    }
+
+    .card-header h2 {
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--text-primary);
+      letter-spacing: 0.2px;
+    }
+
+    .card-body {
+      padding: 24px;
+    }
+
+    /* ── Scan Input ──────────────────────────── */
+    .scan-field {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .scan-field label {
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text-secondary);
+      letter-spacing: 0.8px;
+      text-transform: uppercase;
+    }
+
+    .input-wrapper {
+      position: relative;
+    }
+
+    .input-icon {
+      position: absolute;
+      left: 14px;
+      top: 50%;
+      transform: translateY(-50%);
+      font-size: 18px;
+      pointer-events: none;
+      color: var(--text-muted);
+    }
+
+    .scan-input {
+      width: 100%;
+      padding: 14px 14px 14px 46px;
+      background: var(--surface-2);
+      border: 1.5px solid var(--border);
+      border-radius: var(--radius-sm);
+      color: var(--text-primary);
+      font-family: var(--font);
+      font-size: 16px;
+      font-weight: 500;
+      letter-spacing: 0.5px;
+      outline: none;
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+
+    .scan-input:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px var(--accent-glow);
+    }
+
+    .scan-input::placeholder {
+      color: var(--text-muted);
+      font-weight: 400;
+    }
+
+    /* ── Status Grid ─────────────────────────── */
+    .status-section {
+      margin-top: 24px;
+      display: none;
+      flex-direction: column;
+      gap: 20px;
+      animation: fadeSlideIn 0.35s ease;
+    }
+
+    .status-section.visible {
+      display: flex;
+    }
+
+    @keyframes fadeSlideIn {
+      from {
+        opacity: 0;
+        transform: translateY(12px);
+      }
+
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    /* Jobcard Info Strip */
+    .jc-info-strip {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background: linear-gradient(90deg, rgba(59, 130, 246, 0.12) 0%, transparent 100%);
+      border: 1px solid rgba(59, 130, 246, 0.25);
+      border-radius: var(--radius-sm);
+      padding: 12px 16px;
+    }
+
+    .jc-info-strip .jc-icon {
+      font-size: 18px;
+    }
+
+    .jc-info-strip .jc-number {
+      font-size: 15px;
+      font-weight: 700;
+      color: var(--accent);
+      font-family: monospace;
+      letter-spacing: 1px;
+    }
+
+    .jc-info-strip .jc-label {
+      font-size: 12px;
+      color: var(--text-secondary);
+      margin-left: auto;
+    }
+
+    /* ── Navigation ─────────────────────────── */
+    .app-nav {
+      display: flex;
+      gap: 12px;
+      margin-bottom: 24px;
+      border-bottom: 1px solid var(--border);
+      padding-bottom: 8px;
+    }
+
+    .nav-btn {
+      background: transparent;
+      border: none;
+      color: var(--text-secondary);
+      font-size: 13px;
+      font-weight: 600;
+      padding: 8px 16px;
+      cursor: pointer;
+      border-radius: var(--radius-sm);
+      transition: all 0.2s;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .nav-btn:hover {
+      color: var(--text-primary);
+      background: rgba(255, 255, 255, 0.05);
+    }
+
+    .nav-btn.active {
+      color: var(--accent);
+      background: rgba(59, 130, 246, 0.1);
+      box-shadow: inset 0 -2px 0 var(--accent);
+      border-radius: var(--radius-sm) var(--radius-sm) 0 0;
+    }
+
+    /* ── Section Journey ────────────────────── */
+    .section-journey {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      flex-wrap: wrap;
+    }
+
+    .journey-step {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .journey-badge {
+      padding: 4px 10px;
+      border-radius: 20px;
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.4px;
+      white-space: nowrap;
+      border: 1px solid transparent;
+      transition: all 0.2s;
+    }
+
+    .journey-badge.done {
+      background: rgba(34, 197, 94, 0.15);
+      color: var(--success);
+      border-color: rgba(34, 197, 94, 0.3);
+    }
+
+    .journey-badge.active {
+      background: linear-gradient(135deg, var(--accent), #6366f1);
+      color: #fff;
+      box-shadow: 0 0 12px rgba(59, 130, 246, 0.4);
+    }
+
+    .journey-badge.pending {
+      background: rgba(255, 255, 255, 0.04);
+      color: var(--text-muted);
+      border-color: rgba(255, 255, 255, 0.07);
+    }
+
+    .journey-badge.skipped {
+      background: rgba(239, 68, 68, 0.15);
+      color: var(--danger);
+      border-color: rgba(239, 68, 68, 0.3);
+    }
+
+    .journey-arrow {
+      color: var(--text-muted);
+      font-size: 12px;
+    }
+
+    .journey-arrow.skipped {
+      color: var(--danger);
+      opacity: 0.5;
+    }
+
+    /* Status Cards Row */
+    .status-cards {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+    }
+
+    .status-card {
+      background: var(--surface-2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 16px 18px;
+      transition: transform 0.2s;
+    }
+
+    .status-card:hover {
+      transform: translateY(-2px);
+    }
+
+    .status-card .sc-label {
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      margin-bottom: 8px;
+    }
+
+    .status-card .sc-value {
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--text-primary);
+      line-height: 1.3;
+    }
+
+    .status-card .sc-sub {
+      font-size: 12px;
+      color: var(--text-secondary);
+      margin-top: 4px;
+      font-weight: 400;
+    }
+
+    .status-card.accent-card {
+      border-color: rgba(59, 130, 246, 0.35);
+      background: linear-gradient(135deg, rgba(59, 130, 246, 0.1) 0%, rgba(99, 102, 241, 0.08) 100%);
+    }
+
+    /* Stage Progress */
+    .stage-label {
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text-secondary);
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      margin-bottom: 10px;
+    }
+
+    .stage-bar {
+      display: flex;
+      gap: 12px;
+      justify-content: space-between;
+    }
+
+    .stage-step-btn {
+      flex: 1;
+      background: transparent;
+      border: none;
+      padding: 8px 4px;
+      border-radius: var(--radius-sm);
+      cursor: pointer;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 8px;
+      transition: all 0.2s;
+    }
+
+    .stage-step-btn:hover:not(:disabled) {
+      background: rgba(255, 255, 255, 0.05);
+    }
+
+    .stage-step-btn:active:not(:disabled) {
+      transform: scale(0.98);
+    }
+
+    .stage-step-btn:disabled {
+      cursor: not-allowed;
+      opacity: 0.6;
+    }
+
+    .stage-dot {
+      width: 100%;
+      height: 6px;
+      border-radius: 3px;
+      background: rgba(255, 255, 255, 0.07);
+      transition: all 0.3s;
+    }
+
+    .stage-dot.done {
+      background: var(--success);
+    }
+
+    .stage-dot.active {
+      background: var(--accent);
+      box-shadow: 0 0 12px var(--accent-glow);
+    }
+
+    .stage-name {
+      font-size: 10px;
+      font-weight: 600;
+      color: var(--text-muted);
+      text-align: center;
+      letter-spacing: 0.3px;
+      line-height: 1.2;
+      text-transform: uppercase;
+    }
+
+    .stage-name.done {
+      color: var(--success);
+    }
+
+    .stage-name.active {
+      color: var(--text-primary);
+    }
+
+    /* ── Modal ───────────────────────────────── */
+    .modal-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.75);
+      backdrop-filter: blur(4px);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 11000;
+      padding: 20px;
+    }
+
+    .modal-overlay.visible {
+      display: flex;
+    }
+
+    .modal {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      width: 100%;
+      max-width: 440px;
+      box-shadow: var(--shadow);
+      animation: modalFadeIn 0.3s ease;
+      overflow: hidden;
+    }
+
+    @keyframes modalFadeIn {
+      from {
+        opacity: 0;
+        transform: translateY(20px);
+      }
+
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .modal-header {
+      padding: 18px 24px;
+      border-bottom: 1px solid var(--border);
+      background: linear-gradient(90deg, rgba(59, 130, 246, 0.1) 0%, transparent 100%);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .modal-header h3 {
+      font-size: 16px;
+      font-weight: 700;
+      color: var(--text-primary);
+      margin: 0;
+    }
+
+    .modal-body {
+      padding: 24px;
+    }
+
+    .modal-footer {
+      padding: 16px 24px;
+      border-top: 1px solid var(--border);
+      display: flex;
+      justify-content: flex-end;
+      gap: 12px;
+    }
+
+    .option-list {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .option-btn {
+      width: 100%;
+      padding: 14px 18px;
+      background: var(--surface-2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      color: var(--text-primary);
+      text-align: left;
+      cursor: pointer;
+      transition: all 0.2s;
+      font-weight: 500;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .option-btn:hover {
+      border-color: var(--accent);
+      background: rgba(59, 130, 246, 0.1);
+      transform: translateX(4px);
+    }
+
+    .modal-input-group {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .modal-input-group label {
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text-secondary);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .modal-input {
+      width: 100%;
+      padding: 14px;
+      background: var(--surface-2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      color: var(--text-primary);
+      font-size: 16px;
+      font-family: var(--font);
+    }
+
+    .inbox-table tr {
+      transition: background 0.2s;
+    }
+
+    .inbox-table tr:hover {
+      background: var(--surface-2);
+      cursor: pointer;
+    }
+
+    .modal-input:focus {
+      outline: none;
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px var(--accent-glow);
+    }
+
+    /* ── Full Page Inbox ─────────────────────── */
+    .inbox-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(255, 255, 255, 0.98);
+      z-index: 10000;
+      display: none;
+      padding: 40px;
+      overflow-y: auto;
+    }
+
+    .inbox-overlay.visible {
+      display: block;
+      animation: fadeIn 0.2s ease-out;
+    }
+
+    .inbox-container {
+      max-width: 1200px;
+      margin: 0 auto;
+      background: white;
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.1);
+      overflow: hidden;
+    }
+
+    .inbox-header {
+      padding: 24px 32px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: #f8fafc;
+    }
+
+    .inbox-header h2 {
+      font-size: 20px;
+      font-weight: 700;
+      margin: 0;
+    }
+
+    #inboxTableContainer {
+      padding: 32px;
+    }
+
+    .inbox-table {
+      width: 100%;
+      border-collapse: separate;
+      border-spacing: 0;
+    }
+
+    .inbox-table th {
+      text-align: left;
+      padding: 16px;
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text-secondary);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      border-bottom: 2px solid var(--border);
+    }
+
+    .inbox-table td {
+      padding: 20px 16px;
+      font-size: 14px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .bulk-list {
+      background: var(--surface-2);
+      border-radius: var(--radius-sm);
+      margin-top: 12px;
+      max-height: 180px;
+      overflow-y: auto;
+      border: 1px solid var(--border);
+    }
+
+    .bulk-item {
+      padding: 12px 16px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 13px;
+    }
+
+    .bulk-item:last-child {
+      border-bottom: none;
+    }
+
+    .bulk-item .jc-num {
+      font-family: monospace;
+      font-weight: 700;
+      color: var(--accent);
+    }
+
+    .bulk-item .jc-status {
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--text-muted);
+    }
+
+    /* ── Action ──────────────────────────────── */
+    .action-row {
+      display: flex;
+      gap: 12px;
+      align-items: flex-end;
+      flex-wrap: wrap;
+    }
+
+    .action-input-group {
+      flex: 1;
+      min-width: 220px;
+    }
+
+    .btn {
+      padding: 14px 24px;
+      border: none;
+      border-radius: var(--radius-sm);
+      font-family: var(--font);
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+      white-space: nowrap;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, var(--accent), #6366f1);
+      color: #fff;
+      box-shadow: 0 4px 14px rgba(59, 130, 246, 0.35);
+    }
+
+    .btn-primary:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(59, 130, 246, 0.45);
+    }
+
+    .btn-primary:active {
+      transform: translateY(0);
+    }
+
+    .btn-ghost {
+      background: transparent;
+      color: var(--text-secondary);
+      border: 1.5px solid var(--border);
+    }
+
+    .btn-ghost:hover {
+      color: var(--text-primary);
+      border-color: var(--accent);
+      background: rgba(59, 130, 246, 0.06);
+    }
+
+    /* ── Toast ───────────────────────────────── */
+    .toast {
+      position: fixed;
+      bottom: 28px;
+      right: 28px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 14px 18px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      box-shadow: var(--shadow);
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--text-primary);
+      transform: translateX(120%);
+      transition: transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
+      z-index: 999;
+      max-width: 320px;
+    }
+
+    .toast.show {
+      transform: translateX(0);
+    }
+
+    .toast-icon {
+      font-size: 16px;
+      flex-shrink: 0;
+    }
+
+    .toast.success {
+      border-color: rgba(34, 197, 94, 0.35);
+    }
+
+    .toast.error {
+      border-color: rgba(239, 68, 68, 0.35);
+    }
+
+    /* ── Divider ─────────────────────────────── */
+    .section-divider {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin: 20px 0;
+    }
+
+    .section-divider hr {
+      flex: 1;
+      border: none;
+      border-top: 1px solid var(--border);
+    }
+
+    .section-divider span {
+      font-size: 11px;
+      color: var(--text-muted);
+      font-weight: 500;
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      white-space: nowrap;
+    }
+
+    /* ── Completion Banner ───────────────────── */
+    .completion-banner {
+      background: linear-gradient(135deg, rgba(34, 197, 94, 0.15) 0%, rgba(16, 185, 129, 0.1) 100%);
+      border: 1px solid rgba(34, 197, 94, 0.3);
+      border-radius: var(--radius-sm);
+      padding: 20px;
+      text-align: center;
+      display: none;
+    }
+
+    .completion-banner.visible {
+      display: block;
+      animation: fadeSlideIn 0.35s ease;
+    }
+
+    .completion-banner .cb-icon {
+      font-size: 36px;
+      margin-bottom: 8px;
+    }
+
+    .completion-banner h3 {
+      font-size: 16px;
+      font-weight: 700;
+      color: var(--success);
+      margin-bottom: 4px;
+    }
+
+    .completion-banner p {
+      font-size: 13px;
+      color: var(--text-secondary);
+    }
+
+    .app-logo {
+      width: 44px;
+      height: 44px;
+      background: #ffffff;
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 4px;
+      box-shadow: 0 0 16px rgba(195, 218, 253, 0.25);
+    }
+
+    .app-logo img {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+    }
+  </style>
+</head>
+
+<body>
+
+  <div class="app-wrapper">
+
+    <!-- Navigation -->
+    <nav class="app-nav">
+      <button class="nav-btn active" id="navScan" onclick="location.reload()">SCAN</button>
+    </nav>
+
+    <!-- Floating Action Buttons -->
+    <!-- Top Row -->
+    <iframe src="employeeinbox.html"
+      style="position: fixed; top: 20px; left: 20px; width: 240px; height: 70px; border: none; z-index: 9999; background: transparent;"
+      id="employeeInboxFrame"></iframe>
+
+    <!-- Left Side (Stack) -->
+    <iframe src="alignertab.html"
+      style="position: fixed; top: 100px; left: 20px; width: 240px; height: 70px; border: none; z-index: 9999; background: transparent;"
+      id="alignerTabFrame"></iframe>
+
+    <iframe src="sectioninbox.html"
+      style="position: fixed; top: 180px; left: 20px; width: 240px; height: 70px; border: none; z-index: 9999; background: transparent;"
+      id="sectionInboxFrame"></iframe>
+
+    <!-- Right Side (Stack) -->
+    <iframe src="saleorder.html"
+      style="position: fixed; top: 100px; right: 20px; width: 240px; height: 70px; border: none; z-index: 9999; background: transparent; display: none;"
+      id="saleOrderFrame"></iframe>
+
+    <iframe src="routechangeplan.html"
+      style="position: fixed; top: 180px; right: 20px; width: 240px; height: 70px; border: none; z-index: 9999; background: transparent; display: none;"
+      id="routeChangeFrame"></iframe>
+
+    <iframe src="stageupdate.html"
+      style="position: fixed; top: 260px; right: 20px; width: 240px; height: 70px; border: none; z-index: 9999; background: transparent; display: none;"
+      id="stageUpdateFrame"></iframe>
+
+    <!-- Header -->
+    <div class="app-header">
+      <div class="app-logo">
+        <img src="./logo.png" alt="DentCare Logo">
+      </div>
+
+      <div class="app-header-text">
+        <h1>Production Jobcard Scan</h1>
+
+      </div>
+      <div class="header-badge">● LIVE</div>
+    </div>
+
+    <!-- Scan Card -->
+    <div class="card">
+      <div class="card-header">
+        <span class="card-header-icon">📋</span>
+        <h2>Scan Jobcard</h2>
+      </div>
+      <div class="card-body">
+
+        <div class="scan-field">
+          <label>Jobcard Number</label>
+          <div class="input-wrapper">
+            <span class="input-icon">🔍</span>
+            <input class="scan-input" id="jobcardInput" placeholder="Scan or type jobcard number & press Enter"
+              autofocus autocomplete="off">
+          </div>
+        </div>
+
+        <!-- Status Section (shown after valid scan) -->
+        <div class="status-section" id="statusSection">
+
+          <!-- Jobcard info -->
+          <div class="jc-info-strip" id="jcInfoStrip">
+            <div style="display:flex; align-items:center; gap:12px;">
+              <span class="jc-icon">🆔</span>
+              <div>
+                <span class="jc-number" id="jcNumber"></span>
+                <span class="jc-label" id="jcLabel"></span>
+              </div>
+            </div>
+            <button class="btn btn-ghost" id="backToScanBtn" style="margin-left:auto; display:none;"
+              onclick="resetToScan()">← Back to Scan</button>
+          </div>
+
+          <!-- Section Journey Breadcrumb -->
+          <div>
+            <div class="stage-label">Section Journey</div>
+            <div class="section-journey" id="sectionJourney"></div>
+          </div>
+
+          <!-- Status Cards -->
+          <div class="status-cards">
+            <div class="status-card accent-card">
+              <div class="sc-label">Current Section</div>
+              <div class="sc-value" id="currentSection">—</div>
+              <div class="sc-sub" id="currentSectionCode">—</div>
+            </div>
+            <div class="status-card">
+              <div class="sc-label">Current Status</div>
+              <div class="sc-value" id="currentStage">—</div>
+              <div class="sc-sub" id="nextStageLabel">—</div>
+            </div>
+          </div>
+
+          <!-- Stage Progress Bar -->
+          <div>
+            <div class="stage-label">Stage Progress</div>
+            <div class="stage-bar" id="stageBar"></div>
+          </div>
+
+          <div class="section-divider">
+            <hr><span>Proceed to Next Stage</span>
+            <hr>
+          </div>
+
+          <!-- DP / Action -->
+          <div class="action-row">
+            <div class="action-input-group">
+              <div class="scan-field">
+                <label>Employee / DP Scan</label>
+                <div class="input-wrapper">
+                  <span class="input-icon">👤</span>
+                  <input class="scan-input" id="dpInput" placeholder="Scan employee badge & press Enter"
+                    autocomplete="off">
+                </div>
+              </div>
+            </div>
+            <button class="btn btn-primary" id="advanceBtn">
+              ▶ continue
+            </button>
+            <button class="btn btn-ghost" id="resetBtn">
+              ↩ Reset
+            </button>
+          </div>
+
+          <!-- Completion Banner -->
+          <div class="completion-banner" id="completionBanner">
+            <div class="cb-icon">✅</div>
+            <h3>All Sections Complete!</h3>
+            <p>Jobcard <span id="completedJcNum"
+                style="font-family:monospace;font-weight:700;color:var(--success)"></span> has been fully processed
+              through all production stages.</p>
+          </div>
+
+        </div><!-- /statusSection -->
+
+      </div><!-- /card-body -->
+    </div><!-- /card -->
+
+  </div>
+
+  <!-- Toast -->
+  <div class="toast" id="toast">
+    <span class="toast-icon" id="toastIcon"></span>
+    <span id="toastMsg"></span>
+  </div>
+
+  <!-- Full Page Inbox Overlay -->
+  <div class="inbox-overlay" id="inboxOverlay">
+    <div class="inbox-container">
+      <div class="inbox-header">
+        <div style="display:flex; align-items:center; gap:12px;">
+          <span style="font-size:24px;">📥</span>
+          <div>
+            <h2 id="inboxUserTitle">Employee Inbox</h2>
+            <p id="inboxUserDP" style="font-size:12px; opacity:0.7;"></p>
+          </div>
+        </div>
+        <button class="btn btn-ghost" onclick="closeInboxView()">&times; Close</button>
+      </div>
+      <div id="inboxTableContainer"></div>
+    </div>
+  </div>
+
+  <!-- Modal -->
+  <div class="modal-overlay" id="modalOverlay">
+    <div class="modal">
+      <div class="modal-header">
+        <h3 id="modalTitle">Action</h3>
+        <button class="btn-ghost" style="padding: 4px 8px; font-size: 18px; border:none;"
+          onclick="closeModal()">&times;</button>
+      </div>
+      <div class="modal-body" id="modalBody">
+        <!-- Content injected here -->
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-ghost" onclick="closeModal()">Cancel</button>
+        <button class="btn btn-primary" id="modalConfirmBtn">Confirm</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // ─── Data ────────────────────────────────────────────────────────────────────
+    const ROUTES = {
+      STANDARD_IMPRESSION: [
+        { code: "FIPLAN", name: "ALIGNER PLANNING AND DESIGN" },
+        { code: "TSDPND", name: "ALIGNER TSD AFTER P & D" },
+        { code: "PDFLOW", name: "P & D FOLLOWUP" },
+        { code: "BILLIN", name: "BILLING" },
+        { code: "FIPACK", name: "PACKING FINAL PACKING" },
+        { code: "DISPAT", name: "DISPATCH" }
+      ],
+
+      MODEL: [
+        { code: "REGDAE", name: "REGISTRATION DATA ENTRY" },
+        { code: "RGVFR", name: "REGISTRATION VERIFICATION" },
+        { code: "MOTRIM", name: "MODEL PREPARATION MODEL TRIMMING" },
+        { code: "MORINS", name: "MODEL PREPARATION RECEIVING INSPECTION" },
+        { code: "MOCASC", name: "MODEL CARVING AND SCANNING" },
+        { code: "EXPLAN", name: "EXACT PLAN" },
+        { code: "REPLAN", name: "REPLAN" },
+        { code: "ZEROSG", name: "ZERO STAGE MODEL CHECKING" },
+        { code: "FIDESG", name: "FINAL DESIGN" },
+        { code: "QUPLAN", name: "QUICK PLAN" },
+        { code: "FINQCK", name: "ALIGNER FINAL QC" }
+      ],
+
+      INTRAORAL_SCAN: [
+        { code: "REGDAE", name: "REGISTRATION DATA ENTRY" },
+        { code: "ALFBRN", name: "ALIGNER FABRICATION" },
+        { code: "FINQCK", name: "ALIGNER FINAL QC" },
+        { code: "BILLIN", name: "BILLING" },
+        { code: "FIPACK", name: "ALIGNER PACKING" },
+        { code: "DISPAT", name: "DISPATCH" }
+      ],
+
+      ROUTE_A: [
+        { code: "PLAN_A", name: "PLANNING ROUTE A" },
+        { code: "SCAN_A", name: "SCANNING ROUTE A" },
+        { code: "QC_A", name: "QUALITY CHECK ROUTE A" },
+        { code: "DISPAT", name: "DISPATCH" }
+      ],
+
+      ROUTE_B: [
+        { code: "PLAN_B", name: "PLANNING ROUTE B" },
+        { code: "SCAN_B", name: "SCANNING ROUTE B" },
+        { code: "FAB_B", name: "FABRICATION ROUTE B" },
+        { code: "QC_B", name: "QUALITY CHECK ROUTE B" },
+        { code: "DISPAT", name: "DISPATCH" }
+      ]
+    };
+
+
+    const STAGES = [
+      { key: "SECTION_IN", label: "SECTION IN" },
+      { key: "WORK_START", label: "WORK START" },
+      { key: "WORK_END", label: "WORK END" },
+      { key: "QI_PASS", label: "QI PASS" },
+      { key: "SECTION_OUT", label: "SECTION OUT" },
+    ];
+
+    const jobcards = {
+      "260227141112": {
+        route: "STANDARD_IMPRESSION", sectionIdx: 0, stageIdx: 0, label: "DENTCARE ALIGNERS — STANDARD IMPRESSION",
+        customer: "Smile Clinic", requireDate: "2026-03-05", teethCount: 12, priority: "P1", assignedTo: null
+      },
+      "260216121815": {
+        route: "MODEL", sectionIdx: 0, stageIdx: 0, label: "DENTCARE ALIGNERS — MODEL",
+        customer: "Aesthetic Dental", requireDate: "2026-03-10", teethCount: 8, priority: "P2", assignedTo: null
+      },
+      "251044935812": {
+        route: "INTRAORAL_SCAN", sectionIdx: 0, stageIdx: 0, label: "DENTCARE ALIGNERS — INTRAORAL SCAN",
+        customer: "Elite Ortho", requireDate: "2026-02-28", teethCount: 14, priority: "P0", assignedTo: null
+      }
+    };
+
+    const USERS = {
+      "DP8220": "JERIN",
+      "DP9225": "ABHISHEK",
+      "DP8928": "ADITH"
+    };
+
+    let activeJC = null;
+    let loggedInDP = null;
+    let loggedInUser = null;
+
+    // ─── Employee Inbox Logic ──────────────────────────────────────────────────
+    function openInbox() {
+      openModal("Employee Inbox Login", `
+        <div class="modal-input-group">
+          <label>Scan or Enter DP Number</label>
+          <input type="text" class="modal-input" id="inboxDPInput" placeholder="DP8220, DP9225, DP8928..." autofocus>
+        </div>
+      `, () => {
+        const dp = document.getElementById("inboxDPInput").value.trim().toUpperCase();
+        if (!dp) return;
+        if (!USERS[dp]) {
+          showToast("Access Denied: Please use authorized DP Number", "error");
+          return;
+        }
+        loggedInDP = dp;
+        loggedInUser = USERS[dp];
+        closeModal();
+        showInboxTable();
+      });
+      modalConfirmBtn.textContent = "Login";
+    }
+
+    function showInboxTable() {
+      const overlay = document.getElementById("inboxOverlay");
+      const container = document.getElementById("inboxTableContainer");
+      document.getElementById("inboxUserTitle").textContent = `Inbox: ${loggedInUser}`;
+      document.getElementById("inboxUserDP").textContent = `Logged in as ${loggedInDP}`;
+
+      let rows = Object.entries(jobcards).map(([id, jc]) => {
+        const isAssignedToOther = jc.assignedTo && jc.assignedTo !== loggedInUser;
+        const isAssignedToSelf = jc.assignedTo === loggedInUser;
+        const isQI = STAGES[jc.stageIdx].key === "QI_PASS";
+
+        const currentSec = ROUTES[jc.route][jc.sectionIdx] || { code: "FIN", name: "Done" };
+
+        let rowStyle = "";
+        let statusTag = "";
+        let dotColor = "#cbd5e1";
+
+        if (isAssignedToOther) {
+          if (isQI) {
+            rowStyle = "background: #fef9c3; color: #854d0e; cursor: not-allowed;";
+            statusTag = `<span style="color:#ca8a04; font-size:11px; font-weight:800;">🔒 LOCKED (QI): ${jc.assignedTo}</span>`;
+            dotColor = "#ca8a04";
+          } else {
+            rowStyle = "background: #fff1f2; color: #991b1b; cursor: not-allowed;";
+            statusTag = `<span style="color:#dc2626; font-size:11px; font-weight:800;">🔒 LOCKED: ${jc.assignedTo}</span>`;
+            dotColor = "#dc2626";
+          }
+        } else if (isAssignedToSelf) {
+          rowStyle = "background: rgba(37, 99, 235, 0.05); font-weight: 600; color: #2563eb; border-left: 4px solid #2563eb;";
+          statusTag = `<span style="color:#2563eb; font-size:11px; font-weight:800;">⭐ YOUR TASK</span>`;
+          dotColor = "#2563eb";
+          if (isQI) {
+            rowStyle = "background: #fef9c3; color: #854d0e; border-left: 4px solid #2563eb;";
+          }
+        } else if (isQI) {
+          rowStyle = "background: #fef9c3; color: #854d0e;";
+          dotColor = "#ca8a04";
+        }
+
+        return `
+          <tr style="${rowStyle}" onclick="${isAssignedToOther ? '' : `confirmInboxSelection('${id}')`}">
+            <td>
+              <div style="display:flex; align-items:center; gap:12px;">
+                <div style="width:10px; height:10px; border-radius:50%; background:${dotColor};"></div>
+                <div>
+                  <b style="font-size:15px; color:var(--text-primary);">${id}</b><br>
+                  ${statusTag}
+                </div>
+              </div>
+            </td>
+            <td style="font-weight:700; color:var(--accent);">${currentSec.code}</td>
+            <td>${jc.customer || "—"}</td>
+            <td>${jc.requireDate || "—"}</td>
+            <td>${jc.teethCount || "—"}</td>
+            <td><span class="badge" style="background:${jc.priority === 'P0' ? 'var(--danger-light)' : 'var(--surface-2)'}; color:${jc.priority === 'P0' ? 'var(--danger)' : 'var(--text-secondary)'}">${jc.priority || "—"}</span></td>
+          </tr>
+        `;
+      }).join("");
+
+      container.innerHTML = `
+        <table class="inbox-table">
+          <thead>
+            <tr>
+              <th>Jobcard Information</th>
+              <th>Section</th>
+              <th>Customer Name</th>
+              <th>Required Date</th>
+              <th>Teeth Count</th>
+              <th>Priority</th>
+            </tr>
+          </thead>
+          <tbody>${rows}</tbody>
+        </table>
+      `;
+
+      overlay.classList.add("visible");
+    }
+
+    function closeInboxView() {
+      document.getElementById("inboxOverlay").classList.remove("visible");
+    }
+
+    function confirmInboxSelection(jcId) {
+      const jc = jobcards[jcId];
+      openModal("Confirm Assignment", `Do you want to assign Jobcard <b>${jcId}</b> to yourself (${loggedInUser})?`, () => {
+        jc.assignedTo = loggedInUser;
+        jobcardInput.value = jcId;
+        loadJobcard();
+        closeInboxView();
+        closeModal();
+      });
+      modalConfirmBtn.textContent = "Start Section In";
+      modalConfirmBtn.style.display = "block";
+    }
+
+    // ─── Elements ─────────────────────────────────────────────────────────────────
+    const jobcardInput = document.getElementById("jobcardInput");
+    const dpInput = document.getElementById("dpInput");
+    const statusSection = document.getElementById("statusSection");
+    const jcNumber = document.getElementById("jcNumber");
+    const jcLabel = document.getElementById("jcLabel");
+    const sectionJourney = document.getElementById("sectionJourney");
+    const currentSection = document.getElementById("currentSection");
+    const currentSectionCode = document.getElementById("currentSectionCode");
+    const currentStage = document.getElementById("currentStage");
+    const nextStageLabel = document.getElementById("nextStageLabel");
+    const stageBar = document.getElementById("stageBar");
+    const advanceBtn = document.getElementById("advanceBtn");
+    const resetBtn = document.getElementById("resetBtn");
+    const completionBanner = document.getElementById("completionBanner");
+    const completedJcNum = document.getElementById("completedJcNum");
+
+    // ─── Toast ────────────────────────────────────────────────────────────────────
+    let toastTimer;
+    function showToast(msg, type = "success") {
+      const toast = document.getElementById("toast");
+      const icon = document.getElementById("toastIcon");
+      const msgEl = document.getElementById("toastMsg");
+      icon.textContent = type === "success" ? "✅" : type === "error" ? "❌" : "ℹ️";
+      msgEl.textContent = msg;
+      toast.className = `toast ${type} show`;
+      clearTimeout(toastTimer);
+      toastTimer = setTimeout(() => toast.classList.remove("show"), 3200);
+    }
+
+    // ─── Render ───────────────────────────────────────────────────────────────────
+    function renderState(jc) {
+      const secIdx = jc.sectionIdx;
+      // Use selected stage if set, else use the logical progress stageIdx
+      const activeStageKey = jc.selectedStageKey || STAGES[jc.stageIdx].key;
+      const sec = ROUTES[jc.route][secIdx] || null;
+      const stage = STAGES.find(s => s.key === activeStageKey) || STAGES[jc.stageIdx];
+
+      if (!sec) {
+        completionBanner.classList.add("visible");
+        completedJcNum.textContent = activeJC;
+        advanceBtn.disabled = true;
+        dpInput.disabled = true;
+        currentSection.textContent = "COMPLETED";
+        currentSectionCode.textContent = "All sections processed";
+        currentStage.textContent = "—";
+        nextStageLabel.textContent = "";
+      } else {
+        completionBanner.classList.remove("visible");
+        advanceBtn.disabled = false;
+        dpInput.disabled = false;
+
+        // Show Subsection in current section header if selected
+        let sectionDisplayName = sec.name;
+        if (jc.selectedSubsection) {
+          sectionDisplayName += ` — Subsection ${jc.selectedSubsection}`;
+        }
+        currentSection.textContent = sectionDisplayName;
+        currentSectionCode.textContent = sec.code;
+        currentStage.textContent = stage.label;
+
+        // Next logical stage hint
+        const nextStg = STAGES[jc.stageIdx + 1];
+        nextStageLabel.textContent = nextStg
+          ? `Expected Next → ${nextStg.label}`
+          : (ROUTES[jc.route][secIdx + 1] ? `Next → SECTION IN [${ROUTES[jc.route][secIdx + 1].name}]` : "Next → COMPLETION");
+      }
+
+      // Back Button Logic: Only visible before any stage is processed (stageIdx === 0)
+      const backBtn = document.getElementById("backToScanBtn");
+      if (activeJC && jc.stageIdx === 0) {
+        backBtn.style.display = "block";
+      } else {
+        backBtn.style.display = "none";
+      }
+
+      // Section Journey breadcrumb
+      sectionJourney.innerHTML = ROUTES[jc.route].map((s, i) => {
+        let isSkipped = jc.skippedIndices && jc.skippedIndices.includes(i);
+        let cls = isSkipped ? "skipped" : i < secIdx ? "done" : i === secIdx ? "active" : "pending";
+        const arrow = i < ROUTES[jc.route].length - 1 ? `<span class="journey-arrow ${isSkipped ? 'skipped' : ''}">›</span>` : "";
+        return `<span class="journey-step"><span class="journey-badge ${cls}">${s.code}</span>${arrow}</span>`;
+      }).join("");
+
+      // Stage progress bar (all clickable now)
+      stageBar.innerHTML = STAGES.map((s, i) => {
+        let isDone = i < jc.stageIdx;
+        let isActive = (s.key === activeStageKey);
+        let cls = isDone ? "done" : isActive ? "active" : "pending";
+
+        return `
+      <button class="stage-step-btn" onclick="handleStageAction('${s.key}')">
+        <div class="stage-dot ${cls}"></div>
+        <div class="stage-name ${cls}">${s.label.replace(" ", "<br>")}</div>
+      </button>`;
+      }).join("");
+    }
+
+    // ─── Modal Logic ─────────────────────────────────────────────────────────────
+    const modalOverlay = document.getElementById("modalOverlay");
+    const modalTitle = document.getElementById("modalTitle");
+    const modalBody = document.getElementById("modalBody");
+    const modalConfirmBtn = document.getElementById("modalConfirmBtn");
+
+    let modalCallback = null;
+
+    function openModal(title, content, onConfirm) {
+      modalTitle.textContent = title;
+      modalBody.innerHTML = content;
+      modalCallback = onConfirm;
+      modalOverlay.classList.add("visible");
+
+      // Focus first input if any
+      const firstInput = modalBody.querySelector("input, button");
+      if (firstInput) setTimeout(() => firstInput.focus(), 100);
+    }
+
+    function closeModal() {
+      modalOverlay.classList.remove("visible");
+      modalCallback = null;
+    }
+
+    modalConfirmBtn.onclick = () => {
+      if (modalCallback) modalCallback();
+    };
+
+    // ─── Stage Specific Handlers ──────────────────────────────────────────────────
+    function handleStageAction(key) {
+      if (!activeJC) return;
+      const jc = jobcards[activeJC];
+      jc.selectedStageKey = key;
+      renderState(jc);
+
+      switch (key) {
+        case "SECTION_IN":
+          openSectionIn();
+          break;
+        case "WORK_START":
+          openWorkStart();
+          break;
+        case "WORK_END":
+          openWorkEnd();
+          break;
+        case "QI_PASS":
+          openQiPass();
+          break;
+        case "SECTION_OUT":
+          openSectionOut();
+          break;
+      }
+    }
+
+    function openSectionIn() {
+      const options = ["A", "B", "C", "D", "E"].map(opt =>
+        `<button class="option-btn" onclick="saveStagePreference({selectedSubsection: '${opt}'}, 'Section In: Subsection ${opt}')">Subsection ${opt} <span>→</span></button>`
+      ).join("");
+
+      openModal("Select Subsection", `<div class="option-list">${options}</div>`, null);
+      modalConfirmBtn.style.display = "none";
+    }
+
+    function openWorkStart() {
+      modalConfirmBtn.style.display = "block";
+      openModal("Edit Work Units", `
+        <div class="modal-input-group">
+          <label>Number of Units</label>
+          <input type="number" id="unitCount" class="modal-input" value="${jobcards[activeJC].units || 1}" min="1">
+          <p style="font-size: 11px; color: var(--text-muted); margin-top:8px;">Jobcard default units: ${jobcards[activeJC].defaultUnits || 1}</p>
+        </div>
+      `, () => {
+        const units = document.getElementById("unitCount").value;
+        saveStagePreference({ units: units }, `Work Start (${units} Units)`);
+      });
+    }
+
+    function openWorkEnd() {
+      modalConfirmBtn.style.display = "block";
+      openModal("Work Completion", `
+        <div class="option-list">
+          <button class="btn btn-primary" style="width:100%" onclick="saveStagePreference({workEndType: 'Single'}, 'Work Ended (Single)')">Single End</button>
+          <button class="btn btn-ghost" style="width:100%; border-color: var(--warning); color: var(--warning);" onclick="showBulkEnd()">Bulk End</button>
+        </div>
+      `, null);
+      modalConfirmBtn.style.display = "none";
+    }
+
+    function showBulkEnd() {
+      const dummies = [
+        { id: "260227141113", status: "In Progress" },
+        { id: "260227141114", status: "In Progress" },
+        { id: "260227141115", status: "Pending" }
+      ];
+
+      const list = dummies.map(d => `
+        <div class="bulk-item">
+          <span class="jc-num">${d.id}</span>
+          <span class="jc-status">${d.status}</span>
+        </div>
+      `).join("");
+
+      openModal("Bulk End Selection", `
+        <p style="font-size: 13px; color: var(--text-secondary); margin-bottom:12px;">Process these related jobcards:</p>
+        <div class="bulk-list">${list}</div>
+      `, () => {
+        saveStagePreference({ workEndType: 'Bulk' }, "Work Ended (Bulk)");
+      });
+      modalConfirmBtn.style.display = "block";
+      modalConfirmBtn.textContent = "Confirm Bulk Process";
+    }
+
+    function openQiPass() {
+      const options = ["QI PASS", "QI VERIFICATION", "QI RETURN"].map(opt =>
+        `<button class="option-btn" onclick="saveStagePreference({qiStatus: '${opt}'}, '${opt}')">${opt} <span>→</span></button>`
+      ).join("");
+
+      openModal("Quality Inspection", `<div class="option-list">${options}</div>`, null);
+      modalConfirmBtn.style.display = "none";
+    }
+
+    function openSectionOut() {
+      modalConfirmBtn.style.display = "none";
+      const currentSub = jobcards[activeJC].selectedSubsection || "A";
+      const nextSubAlpha = String.fromCharCode(currentSub.charCodeAt(0) + 1);
+
+      openModal("Section Out: Current Stage Complete", `
+        <div style="text-align: center; padding: 10px 0;">
+          <div style="font-size: 40px; margin-bottom: 20px;">🎖️</div>
+          <p style="margin-bottom: 20px; color: var(--text-primary);">You have completed all stages for <b>Subsection ${currentSub}</b>.</p>
+          
+          <div class="option-list">
+            <button class="option-btn" onclick="saveStagePreference({nextAction: 'SUBSECTION', nextSub: '${nextSubAlpha}'}, 'Preparing Subsection ${nextSubAlpha}')">
+              <span>Start Next Subsection (${nextSubAlpha})</span>
+              <span>→</span>
+            </button>
+            <button class="option-btn" style="border-color: var(--success);" onclick="saveStagePreference({nextAction: 'SECTION'}, 'Section Successfully Completed')">
+              <span>Finish Section & Move Next</span>
+              <span>✅</span>
+            </button>
+          </div>
+        </div>
+      `, null);
+    }
+
+    function saveStagePreference(prefs, toastMsg) {
+      const jc = jobcards[activeJC];
+      Object.assign(jc, prefs);
+      closeModal();
+      showToast(toastMsg, "success");
+      renderState(jc);
+      dpInput.focus();
+    }
+
+    // ─── Summary & Execution ───────────────────────────────────────────────────
+    function showSummaryPopup() {
+      if (!activeJC) return;
+      const jc = jobcards[activeJC];
+      const dp = dpInput.value.trim();
+      if (!dp) {
+        showToast("Please scan employee badge first.", "error");
+        dpInput.focus();
+        return;
+      }
+
+      const stageObj = STAGES.find(s => s.key === (jc.selectedStageKey || STAGES[jc.stageIdx].key));
+      const section = ROUTES[jc.route][jc.sectionIdx];
+
+      let details = `
+        <div style="display:flex; flex-direction:column; gap:12px;">
+          <div style="background:rgba(255,255,255,0.05); padding:12px; border-radius:8px;">
+            <p style="font-size:11px; color:var(--text-muted); text-transform:uppercase;">Jobcard</p>
+            <p style="font-weight:700; color:var(--accent);">${activeJC}</p>
+          </div>
+          <div style="display:grid; grid-template-columns: 1fr 1fr; gap:12px;">
+            <div>
+              <p style="font-size:11px; color:var(--text-muted); text-transform:uppercase;">Stage</p>
+              <p style="font-weight:600;">${stageObj.label}</p>
+            </div>
+            <div>
+              <p style="font-size:11px; color:var(--text-muted); text-transform:uppercase;">Employee</p>
+              <p style="font-weight:600;">${dp}</p>
+            </div>
+          </div>
+          <div>
+            <p style="font-size:11px; color:var(--text-muted); text-transform:uppercase;">Next Destination</p>
+            <p style="color:var(--text-primary); font-weight:600;">
+              ${jc.nextAction === 'SUBSECTION' ? `Subsection ${jc.nextSub}` : 'Next Department / Section'}
+            </p>
+          </div>
+        </div>
+      `;
+
+      modalConfirmBtn.style.display = "block";
+      modalConfirmBtn.textContent = "CONTINUE";
+      openModal("Final Confirmation", details, () => {
+        applyStageChanges();
+      });
+    }
+
+    function applyStageChanges() {
+      const jc = jobcards[activeJC];
+      const selectedKey = jc.selectedStageKey || STAGES[jc.stageIdx].key;
+
+      if (selectedKey === "SECTION_OUT") {
+        jc.assignedTo = null; // Unlock when section out is done
+        if (jc.nextAction === 'SUBSECTION') {
+          // Stay in section, restart cycle for new subsection
+          jc.selectedSubsection = jc.nextSub;
+          jc.stageIdx = 0;
+          showToast(`Started Subsection ${jc.nextSub}`, "success");
+        } else {
+          // Final section out
+          jc.sectionIdx++;
+          jc.stageIdx = 0;
+          jc.selectedSubsection = null;
+        }
+      } else {
+        if (selectedKey === STAGES[jc.stageIdx].key) {
+          jc.stageIdx++;
+        }
+      }
+
+      // Cleanup
+      delete jc.selectedStageKey;
+      delete jc.nextAction;
+      delete jc.nextSub;
+
+      closeModal();
+      showToast("Transaction Recorded.", "success");
+      setTimeout(() => resetToScan(), 600);
+    }
+
+    // ─── Load Jobcard ─────────────────────────────────────────────────────────────
+    function loadJobcard() {
+      const input = jobcardInput.value.trim();
+      if (!input) return;
+
+      if (!jobcards[input]) {
+        showToast(`Jobcard "${input}" not found.`, "error");
+        jobcardInput.select();
+        return;
+      }
+
+      activeJC = input;
+      const jc = jobcards[input];
+
+      // Init defaults if missing
+      jc.defaultUnits = jc.defaultUnits || 1;
+      jc.units = jc.units || jc.defaultUnits;
+
+      jcNumber.textContent = activeJC;
+      jcLabel.textContent = jc.label;
+      statusSection.classList.add("visible");
+
+      // Visibility Rules: Hide Inbox, Show Production actions
+      document.getElementById("employeeInboxFrame").style.display = "none";
+      document.getElementById("saleOrderFrame").style.display = "block";
+      document.getElementById("stageUpdateFrame").style.display = "block";
+      document.getElementById("routeChangeFrame").style.display = "block";
+
+      renderState(jc);
+      dpInput.focus();
+      showToast(`Jobcard ${activeJC} loaded.`, "success");
+    }
+
+    // ─── Reset & Navigation ──────────────────────────────────────────────────────
+    function resetToScan() {
+      activeJC = null;
+      jobcardInput.value = "";
+      dpInput.value = "";
+      statusSection.classList.remove("visible");
+      completionBanner.classList.remove("visible");
+
+      // Visibility Rules: Show Inbox, Hide Production actions
+      document.getElementById("employeeInboxFrame").style.display = "block";
+      document.getElementById("saleOrderFrame").style.display = "none";
+      document.getElementById("stageUpdateFrame").style.display = "none";
+      document.getElementById("routeChangeFrame").style.display = "none";
+
+      jobcardInput.focus();
+    }
+
+    function resetScreen() {
+      resetToScan();
+    }
+
+    // ─── Stage Update Logic ──────────────────────────────────────────────────────
+    function openStageUpdate() {
+      if (!activeJC) {
+        showToast("Please scan a jobcard first.", "error");
+        return;
+      }
+
+      const jc = jobcards[activeJC];
+      const sections = ROUTES[jc.route];
+
+      const options = sections.map((s, i) =>
+        `<button class="option-btn" onclick="openSubsectionSelectionForJump(${i})">
+           <div style="display:flex; flex-direction:column;">
+             <span style="font-weight:700; color:var(--accent);">${s.code}</span>
+             <span style="font-size:11px; opacity:0.7;">${s.name}</span>
+           </div>
+           <span>→</span>
+         </button>`
+      ).join("");
+
+      openModal("Stage Update: Select Target Section", `<div class="option-list">${options}</div>`, null);
+      modalConfirmBtn.style.display = "none";
+    }
+
+    function openSubsectionSelectionForJump(targetIdx) {
+      const options = ["A", "B", "C", "D", "E"].map(opt =>
+        `<button class="option-btn" onclick="confirmStageJump(${targetIdx}, '${opt}')">Subsection ${opt} <span>→</span></button>`
+      ).join("");
+
+      openModal("Select Target Subsection", `<div class="option-list">${options}</div>`, null);
+      modalConfirmBtn.style.display = "none";
+    }
+
+    function confirmStageJump(targetIdx, subsection) {
+      const jc = jobcards[activeJC];
+      const section = ROUTES[jc.route][targetIdx];
+
+      openModal("Are you sure?", `
+        <div style="text-align: center; padding: 10px 0;">
+          <p>You are moving Jobcard <b>${activeJC}</b> to:</p>
+          <p style="font-size: 18px; color: var(--accent); font-weight: 700; margin: 16px 0;">${section.name} [${section.code}]</p>
+          <p style="font-size: 14px; color: var(--text-primary); margin-bottom: 12px;">Subsection: <b>${subsection}</b></p>
+          <p style="font-size: 12px; color: var(--text-muted); padding: 12px; background: rgba(239, 68, 68, 0.1); border-radius: 8px;">
+            ⚠️ Sections skipped between your current position and ${section.code} will be marked as <b style="color:var(--danger)">NOT COVERED (RED)</b>.
+          </p>
+        </div>
+      `, () => {
+        executeStageJump(targetIdx, subsection);
+      });
+
+      modalConfirmBtn.style.display = "block";
+      modalConfirmBtn.textContent = "YES, UPDATE STAGE";
+    }
+
+    function executeStageJump(targetIdx, subsection) {
+      const jc = jobcards[activeJC];
+      const startIdx = jc.sectionIdx;
+
+      if (!jc.skippedIndices) jc.skippedIndices = [];
+
+      // Mark as skipped if moving forward
+      if (targetIdx > startIdx) {
+        for (let i = startIdx; i < targetIdx; i++) {
+          if (!jc.skippedIndices.includes(i)) {
+            jc.skippedIndices.push(i);
+          }
+        }
+      } else {
+        // If moving backwards, remove from skipped
+        jc.skippedIndices = jc.skippedIndices.filter(idx => idx < targetIdx);
+      }
+
+      jc.sectionIdx = targetIdx;
+      jc.stageIdx = 0;
+      jc.selectedSubsection = subsection;
+
+      closeModal();
+      showToast(`Successfully moved to ${ROUTES[jc.route][targetIdx].code} — Sub ${subsection}`, "success");
+
+      renderState(jc);
+    }
+
+    // ─── Route Change Logic ───────────────────────────────────────────────────
+    function openRouteChange() {
+      if (!activeJC) {
+        showToast("Please scan a jobcard first.", "error");
+        return;
+      }
+
+      const routes = [
+        { key: "ROUTE_A", name: "Route A (Current Plan)" },
+        { key: "ROUTE_B", name: "Route B" }
+      ];
+
+      const currentRoute = jobcards[activeJC].route;
+
+      const options = routes.map(r =>
+        `<button class="option-btn" ${r.key === currentRoute ? 'disabled style="opacity:0.5; cursor:not-allowed;"' : `onclick="confirmRouteChange('${r.key}', '${r.name}')"`}>
+           <span>${r.name} ${r.key === currentRoute ? '(Active)' : ''}</span>
+           <span>→</span>
+         </button>`
+      ).join("");
+
+      openModal("Route Change Plan", `<div class="option-list">${options}</div>`, null);
+      modalConfirmBtn.style.display = "none";
+    }
+
+    function confirmRouteChange(routeKey, routeName) {
+      openModal("Confirm Route Change", `
+        <div style="text-align: center; padding: 10px 0;">
+          <p>You are changing the route of Jobcard <b>${activeJC}</b> to:</p>
+          <p style="font-size: 18px; color: var(--accent); font-weight: 700; margin: 16px 0;">${routeName}</p>
+          <p style="font-size: 12px; color: var(--text-muted); padding: 12px; background: rgba(245, 158, 11, 0.1); border-radius: 8px;">
+            ⚠️ Changing the route will reset your current progress and update the section sequence.
+          </p>
+        </div>
+      `, () => {
+        executeRouteChange(routeKey, routeName);
+      });
+
+      modalConfirmBtn.style.display = "block";
+      modalConfirmBtn.textContent = "YES, CHANGE ROUTE";
+    }
+
+    function executeRouteChange(routeKey, routeName) {
+      const jc = jobcards[activeJC];
+      jc.route = routeKey;
+      jc.sectionIdx = 0;
+      jc.stageIdx = 0;
+      jc.selectedSubsection = null;
+      jc.skippedIndices = [];
+
+      closeModal();
+      showToast(`Route changed to ${routeName}`, "success");
+      renderState(jc);
+    }
+
+    // ─── External Redirects ───────────────────────────────────────────────────
+    function openSaleOrder() {
+      if (!activeJC) {
+        showToast("Please scan a jobcard first to view Sale Order.", "error");
+        return;
+      }
+      const jc = jobcards[activeJC];
+      const url = `saleorder_detail.html?jc=${activeJC}&cust=${encodeURIComponent(jc.customer || '')}&date=${encodeURIComponent(jc.requireDate || '')}`;
+      window.open(url, '_blank', 'width=1200,height=800');
+    }
+
+    // ─── Event Listeners ──────────────────────────────────────────────────────────
+    window.addEventListener('message', (event) => {
+      if (event.data === 'OPEN_STAGE_UPDATE') {
+        openStageUpdate();
+      }
+      if (event.data === 'OPEN_ROUTE_CHANGE') {
+        openRouteChange();
+      }
+      if (event.data === 'OPEN_SALE_ORDER') {
+        openSaleOrder();
+      }
+      if (event.data && event.data.type === 'OPEN_INBOX') {
+        openInbox();
+      }
+    });
+
+    jobcardInput.addEventListener("keypress", e => { if (e.key === "Enter") loadJobcard(); });
+    dpInput.addEventListener("keypress", e => {
+      if (e.key === "Enter") showSummaryPopup();
+    });
+    advanceBtn.addEventListener("click", showSummaryPopup);
+    resetBtn.addEventListener("click", resetScreen);
+  </script>
+</body>
+
+</html>

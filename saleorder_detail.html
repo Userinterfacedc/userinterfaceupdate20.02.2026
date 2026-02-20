@@ -1,0 +1,480 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sales Order Entry</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --win-bg: #f0f3f7;
+            --win-header-bg: linear-gradient(180deg, #fdfdfe 0%, #cbd5e1 100%);
+            --win-border: #8e9aaf;
+            --accent-orange: #f97316;
+            --text-dark: #1e293b;
+            --grid-header: #f8fafc;
+            --pink-highlight: #ffe4e6;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Helvetica, sans-serif;
+            margin: 0;
+            background-color: #64748b;
+            padding: 10px;
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow: hidden;
+        }
+
+        .window {
+            width: 100%;
+            height: 100%;
+            background: var(--win-bg);
+            border: 2px solid var(--win-border);
+            display: flex;
+            flex-direction: column;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+            border-radius: 4px;
+        }
+
+        /* Toolbar / Header */
+        .window-header {
+            background: var(--win-header-bg);
+            padding: 4px 8px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid var(--win-border);
+        }
+
+        .window-title {
+            font-size: 13px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-weight: 500;
+        }
+
+        .window-controls {
+            display: flex;
+            gap: 2px;
+        }
+
+        .win-btn {
+            width: 32px;
+            height: 18px;
+            border: 1px solid #94a3b8;
+            background: white;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 12px;
+            cursor: pointer;
+        }
+
+        .win-btn.close:hover {
+            background: #ef4444;
+            color: white;
+        }
+
+        /* Main Form Area */
+        .form-area {
+            padding: 12px;
+            flex: 1;
+            overflow: auto;
+        }
+
+        .top-fields {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 12px;
+            margin-bottom: 15px;
+        }
+
+        .field-group {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 6px;
+        }
+
+        label {
+            font-size: 11px;
+            color: #475569;
+            width: 100px;
+            text-align: right;
+            white-space: nowrap;
+        }
+
+        .required::after {
+            content: " *";
+            color: red;
+        }
+
+        input,
+        select {
+            padding: 3px 6px;
+            border: 1px solid var(--win-border);
+            border-radius: 1px;
+            font-size: 12px;
+            background: white;
+            flex: 1;
+        }
+
+        input[readonly] {
+            background: #f1f5f9;
+        }
+
+        /* Custom Tabs */
+        .tab-strip {
+            display: flex;
+            border-bottom: 1px solid var(--win-border);
+            margin-bottom: 0px;
+        }
+
+        .tab {
+            padding: 4px 12px;
+            background: #e2e8f0;
+            border: 1px solid var(--win-border);
+            border-bottom: none;
+            font-size: 11px;
+            margin-right: 2px;
+            cursor: pointer;
+        }
+
+        .tab.active {
+            background: white;
+            border-bottom: 1px solid white;
+            position: relative;
+            top: 1px;
+            font-weight: 600;
+        }
+
+        /* Table Area */
+        .grid-container {
+            border: 1px solid var(--win-border);
+            background: white;
+            height: 300px;
+            overflow: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 11px;
+            table-layout: fixed;
+        }
+
+        th {
+            background: var(--grid-header);
+            border: 1px solid #cbd5e1;
+            padding: 6px;
+            text-align: left;
+            position: sticky;
+            top: 0;
+            white-space: nowrap;
+        }
+
+        td {
+            border: 1px solid #e2e8f0;
+            padding: 4px 6px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        tr.highlight {
+            background: var(--pink-highlight);
+        }
+
+        tr.selected {
+            background: #dbeafe;
+        }
+
+        /* Remarks/Summary Section */
+        .bottom-sections {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 20px;
+            margin-top: 15px;
+        }
+
+        .remarks-area {
+            border: 1px solid var(--win-border);
+            padding: 8px;
+            background: white;
+            font-size: 12px;
+            height: 100px;
+            overflow-y: auto;
+        }
+
+        /* Action Buttons */
+        .action-bar {
+            padding: 10px;
+            background: #e2e8f0;
+            border-top: 1px solid var(--win-border);
+            display: flex;
+            gap: 6px;
+        }
+
+        .btn-legacy {
+            padding: 4px 12px;
+            font-size: 11px;
+            background: white;
+            border: 1px solid var(--win-border);
+            cursor: pointer;
+            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+        }
+
+        .btn-legacy:hover {
+            background: #f8fafc;
+        }
+
+        .summary-group {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            align-items: flex-end;
+        }
+
+        .summary-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .summary-item label {
+            width: auto;
+            font-weight: 600;
+        }
+
+        .summary-item input {
+            width: 100px;
+            text-align: right;
+            font-weight: 700;
+            color: #1e293b;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="window">
+        <div class="window-header">
+            <div class="window-title">🛒 Sales Order — <span id="jcIdHeader">GWT000066</span></div>
+            <div class="window-controls">
+                <div class="win-btn">_</div>
+                <div class="win-btn">□</div>
+                <div class="win-btn close" onclick="window.close()">×</div>
+            </div>
+        </div>
+
+        <div class="form-area">
+            <div class="top-fields">
+                <div>
+                    <div class="field-group">
+                        <label class="required">Customer Code</label>
+                        <input type="text" value="GWT000066" readonly>
+                        <button style="padding:0 5px;">...</button>
+                    </div>
+                    <div class="field-group">
+                        <label>Customer Name</label>
+                        <input type="text" value="SMILE PROFILE DENTAL SPECIALITIES" readonly>
+                    </div>
+                    <div class="field-group">
+                        <label>Phone Number</label>
+                        <input type="text">
+                    </div>
+                </div>
+
+                <div>
+                    <div class="field-group">
+                        <label>Patient Name</label>
+                        <input type="text" value="YOWA JIMEEN">
+                    </div>
+                    <div class="field-group">
+                        <label>Patient ID</label>
+                        <input type="text">
+                    </div>
+                    <div class="field-group">
+                        <label>Route Stages</label>
+                        <select>
+                            <option>Scanning</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div>
+                    <div class="field-group">
+                        <label>Age</label>
+                        <input type="text" value="0" style="width:40px; flex:none;">
+                    </div>
+                    <div class="field-group">
+                        <label>Series / Order No.</label>
+                        <div style="display:flex; gap:4px; flex:1;">
+                            <select style="flex:0.5;">
+                                <option>SO_2024</option>
+                            </select>
+                            <input type="text" value="449358" style="flex:1;">
+                        </div>
+                    </div>
+                    <div class="field-group">
+                        <label>Order Date</label>
+                        <input type="text" value="30/03/2024" readonly>
+                    </div>
+                </div>
+            </div>
+
+            <div class="tab-strip">
+                <div class="tab">Contents</div>
+                <div class="tab">Address</div>
+                <div class="tab">Related Orders</div>
+                <div class="tab">Details</div>
+                <div class="tab active">Job Order</div>
+                <div class="tab">Attachments</div>
+                <div class="tab">Wearing Schedule</div>
+            </div>
+
+            <div class="grid-container">
+                <table id="dataTable">
+                    <thead>
+                        <tr>
+                            <th style="width:30px;">#</th>
+                            <th style="width:80px;">Date</th>
+                            <th style="width:70px;">User</th>
+                            <th style="width:110px;">Product</th>
+                            <th style="width:180px;">Description</th>
+                            <th style="width:90px;">JobOrderNo</th>
+                            <th style="width:100px;">JobOrderStatus</th>
+                            <th style="width:110px;">NextStage</th>
+                            <th style="width:80px;">InvoiceNo.</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>1</td>
+                            <td>30-03-2024</td>
+                            <td>DPT347...</td>
+                            <td>DINACA061...</td>
+                            <td>DENTCARE ALIGNERS WO...</td>
+                            <td>24034493581</td>
+                            <td>SectionIN</td>
+                            <td>ALIGNER TSD</td>
+                            <td>0</td>
+                        </tr>
+                        <tr>
+                            <td>2</td>
+                            <td>30-03-2024</td>
+                            <td>DP2350...</td>
+                            <td>DINACA021...</td>
+                            <td>DENTCARE ALIGNERS PLA...</td>
+                            <td>24034493582</td>
+                            <td>WorkStarts</td>
+                            <td>ALIGNER TSD AFTER P&D</td>
+                            <td>0</td>
+                        </tr>
+                        <tr class="highlight">
+                            <td>3</td>
+                            <td>08-08-2024</td>
+                            <td>DP4420...</td>
+                            <td>DINACA011...</td>
+                            <td>DENTCARE ALIGNERS ZER...</td>
+                            <td>24084493583</td>
+                            <td>Dispatched</td>
+                            <td>DISPATCH</td>
+                            <td>11043277</td>
+                        </tr>
+                        <tr>
+                            <td>4</td>
+                            <td>10-08-2024</td>
+                            <td>DPT358...</td>
+                            <td>DINACA041...</td>
+                            <td>DENTCARE ALIGNERS FIN...</td>
+                            <td>24084493584</td>
+                            <td>SectionOut</td>
+                            <td>FINAL REPORT AND MODEL...</td>
+                            <td>0</td>
+                        </tr>
+                        <tr>
+                            <td>5</td>
+                            <td>10-08-2024</td>
+                            <td>DP4420...</td>
+                            <td>DINACA011...</td>
+                            <td>DENTCARE ALIGNERS PRI...</td>
+                            <td>24084493585</td>
+                            <td>Dispatched</td>
+                            <td>DISPATCH</td>
+                            <td>0</td>
+                        </tr>
+                        <tr>
+                            <td>6</td>
+                            <td>21-11-2024</td>
+                            <td>DP7906...</td>
+                            <td>DINACA011...</td>
+                            <td>DENTCARE ALIGNERS REP...</td>
+                            <td>24114493586</td>
+                            <td>SectionIN</td>
+                            <td>ALIGNER FABRICATION</td>
+                            <td>0</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="bottom-sections">
+                <div>
+                    <p style="font-size:11px; margin:0 0 4px; font-weight:600;">Remarks</p>
+                    <div class="remarks-area">
+                        NEW SCAN -3775 CAME ON 08/08/2024 -SANIJA<br>
+                        NEW U/L TRAY CAME ON 28.6.2025<br>
+                        NEW SCAN CAME ON 8/8/2025<br><br>
+                        NEW SCN -8413 CAME ON 2/2/26
+                    </div>
+                </div>
+                <div>
+                    <div class="field-group"><label>Sales Employee</label><select>
+                            <option>DP1049 - MISTU MODAK</option>
+                        </select></div>
+                    <div class="field-group"><label>Identification</label><input type="text"></div>
+                    <div class="field-group"><label class="required">Instruction Slip</label><input type="text"
+                            value="1866794"></div>
+                </div>
+                <div class="summary-group">
+                    <div class="summary-item"><label>Total Bef Discount</label><input type="text" value="48797.00"
+                            readonly></div>
+                    <div class="summary-item"><label>Discount (%)</label><input type="text" value="0.00"></div>
+                    <div class="summary-item"><label>Tax Amount</label><input type="text" value="2439.85" readonly>
+                    </div>
+                    <div class="summary-item"><label>Total Amount</label><input type="text" value="51236.85" readonly
+                            style="color:red;"></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="action-bar">
+            <button class="btn-legacy" style="font-weight:700;">Ok</button>
+            <button class="btn-legacy">Cancel</button>
+            <button class="btn-legacy">New</button>
+            <button class="btn-legacy">Edit</button>
+            <button class="btn-legacy">Generate JobCard</button>
+            <button class="btn-legacy">Print Address</button>
+            <button class="btn-legacy">Print SO BarCode</button>
+            <button class="btn-legacy">Print SO</button>
+        </div>
+    </div>
+
+    <script>
+        // Data sync from main app
+        window.addEventListener('load', () => {
+            const params = new URLSearchParams(window.location.search);
+            const jcId = params.get('jc');
+            if (jcId) {
+                document.getElementById('jcIdHeader').textContent = jcId;
+            }
+        });
+    </script>
+</body>
+
+</html>

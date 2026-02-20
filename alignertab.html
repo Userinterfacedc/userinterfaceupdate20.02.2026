@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Aligner Tab</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --accent: #2563eb;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: transparent;
+            margin: 0;
+            display: flex;
+            justify-content: flex-start;
+            align-items: center;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        .action-btn {
+            background: linear-gradient(135deg, var(--accent), #6366f1);
+            color: white;
+            border: none;
+            width: 220px;
+            height: 50px;
+            border-radius: 8px;
+            font-weight: 700;
+            font-size: 13px;
+            cursor: pointer;
+            box-shadow: 0 4px 15px rgba(37, 99, 235, 0.3);
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            box-sizing: border-box;
+        }
+
+        .action-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(37, 99, 235, 0.4);
+            filter: brightness(1.1);
+        }
+
+        .icon {
+            font-size: 18px;
+        }
+    </style>
+</head>
+
+<body>
+    <button class="action-btn">
+        <span class="icon">📑</span>
+        ALIGNER TAB
+    </button>
+</body>
+
+</html>
